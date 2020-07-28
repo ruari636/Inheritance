@@ -20,7 +20,7 @@ private:
 	std::mt19937 rng = std::mt19937( std::random_device{}() );
 };
 
-class MemeFighter : protected Dice
+class MemeFighter
 {
 protected:
 	MemeFighter(std::string name, int hp, int speed, int power)
@@ -38,6 +38,11 @@ protected:
 	int speed;
 	int power;
 	bool alive = true;
+	mutable Dice dice;
+	int Roll(int amount) const
+	{
+		return dice.Roll(amount);
+	}
 public:
 	std::string GetName() { return name; }
 	bool IsAlive() { return alive; }
@@ -45,13 +50,16 @@ public:
 	int GetPower() { return power; }
 	void Punch(MemeFighter& enemy) 
 	{
-		int damageDealt = power + Roll(2);
-		enemy.changeHp(-damageDealt);
-		std::cout << name << " punched " << enemy.GetName() << " for " << damageDealt
-			<< " hitpoints." << '\n';
-		if (!enemy.IsAlive())
+		if (alive)
 		{
-			std::cout << "Shame that " << enemy.GetName() << " is already dead noob.\n";
+			int damageDealt = power + Roll(2);
+			enemy.changeHp(-damageDealt);
+			std::cout << name << " punched " << enemy.GetName() << " for " << damageDealt
+				<< " hitpoints." << '\n';
+			if (!enemy.IsAlive())
+			{
+				std::cout << "Shame that " << enemy.GetName() << " is already dead noob.\n";
+			}
 		}
 	}
 	void changeHp(int deltaHp) { hp += deltaHp; }
@@ -82,7 +90,7 @@ public:
 	{
 		if (Roll(1) < 3)
 		{
-			int damage = Roll(2) + MemeFighter::GetPower();
+			int damage = Roll(3) + 20;
 			enemy.changeHp(-damage);
 			if (enemy.IsAlive())
 			{
@@ -130,7 +138,7 @@ public:
 		if (Roll(1) < 4)
 		{
 			speed += 3;
-			power = (int)((float)power * 69.0f / 42.0f);
+			power = (power * 69) / 42;
 			hp += 10;
 			maxHp += 10;
 			Super = true;
