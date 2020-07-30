@@ -62,6 +62,7 @@ public:
 			}
 		}
 	}
+	virtual void SpecialMove(MemeFighter& enemy) {};
 	void changeHp(int deltaHp) { hp += deltaHp; }
 	void Tick() 
 	{
@@ -86,7 +87,7 @@ public:
 		MemeFighter(name, 69, 7, 14)
 	{
 	}
-	void SpecialMove(MemeFighter& enemy)
+	void SpecialMove(MemeFighter& enemy) override
 	{
 		if (Roll(1) < 3)
 		{
@@ -104,7 +105,7 @@ public:
 			}
 			return;
 		}
-		std::cout << MemeFighter::GetName() << "'s attack was unsuccessful";
+		std::cout << MemeFighter::GetName() << "'s attack was unsuccessful\n";
 	}
 	void Tick()
 	{
@@ -133,7 +134,7 @@ public:
 		MemeFighter(name, 80, 4, 10)
 	{
 	}
-	void SpecialMove()
+	void SpecialMove(MemeFighter& x) override
 	{
 		if (Roll(1) < 4)
 		{
@@ -148,7 +149,7 @@ public:
 	}
 };
 
-void Engage( MemeFighter& f1,MemeFighter& f2 )
+void EngageBasic( MemeFighter& f1,MemeFighter& f2 )
 {
 	// pointers for sorting purposes
 	auto* p1 = &f1;
@@ -163,6 +164,26 @@ void Engage( MemeFighter& f1,MemeFighter& f2 )
 	p2->Punch( *p1 );
 }
 
+void EngageSpecial(MemeFighter& f1, MemeFighter& f2)
+{
+	// pointers for sorting purposes
+	auto* p1 = &f1;
+	auto* p2 = &f2;
+	// determine attack order
+	if (p1->GetInitiative() < p2->GetInitiative())
+	{
+		std::swap(p1, p2);
+	}
+	p1->SpecialMove(*p2);
+	p2->SpecialMove(*p1);
+}
+
+void Engage(MemeFighter& f1, MemeFighter& f2)
+{
+	EngageBasic(f1, f2);
+	EngageSpecial(f1, f2);
+}
+
 int main()
 {
 	MemeFrog f1( "Dat Boi" );
@@ -172,9 +193,6 @@ int main()
 	{
 		// trade blows
 		Engage( f1,f2 );
-		// special moves
-		f2.SpecialMove();
-		f1.SpecialMove( f2 );
 		// end of turn maintainence
 		f1.Tick();
 		f2.Tick();
