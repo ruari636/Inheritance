@@ -2,6 +2,7 @@
 #include <string>
 #include <conio.h>
 #include <random>
+#include <algorithm>
 
 class Dice
 {
@@ -44,10 +45,11 @@ protected:
 		return dice.Roll(amount);
 	}
 public:
-	std::string GetName() { return name; }
-	bool IsAlive() { return alive; }
-	int GetInitiative() { return speed + Roll(2); }
-	int GetPower() { return power; }
+	virtual ~MemeFighter() = default;
+	std::string GetName() const { return name; }
+	bool IsAlive() const { return alive; }
+	int GetInitiative() const { return speed + Roll(2); }
+	int GetPower() const { return power; }
 	void Punch(MemeFighter& enemy) 
 	{
 		if (alive)
@@ -64,7 +66,7 @@ public:
 	}
 	virtual void SpecialMove(MemeFighter& enemy) {};
 	void changeHp(int deltaHp) { hp += deltaHp; }
-	void Tick() 
+	virtual void Tick() 
 	{
 		alive = hp > 0;
 		if (alive)
@@ -107,8 +109,9 @@ public:
 		}
 		std::cout << MemeFighter::GetName() << "'s attack was unsuccessful\n";
 	}
-	void Tick()
+	void Tick() override
 	{
+		alive = hp > 0;
 		if (MemeFighter::IsAlive())
 		{
 			int damage = Roll(1);
@@ -184,33 +187,65 @@ void Engage(MemeFighter& f1, MemeFighter& f2)
 	EngageSpecial(f1, f2);
 }
 
+std::vector<MemeFighter*> team1 =
+{
+	new MemeFrog("Dat Boi"),
+	new MemeStoner("Good Guy Greg"),
+	new MemeFrog("The WB Frog")
+};
+
+std::vector<MemeFighter*> team2 =
+{
+	new MemeStoner("Chong"),
+	new MemeStoner("Scumbag Steve"),
+	new MemeFrog("Pepe")
+};
+
+auto isAlive = [](const MemeFighter* f) {return f->IsAlive(); };
+
 int main()
 {
-	MemeFrog f1( "Dat Boi" );
-	MemeStoner f2( "Good Guy Greg" );
-
-	while( f1.IsAlive() && f2.IsAlive() )
+	while (std::any_of(team1.begin(), team1.end(), isAlive) &&
+		std::any_of(team2.begin(), team2.end(), isAlive))
 	{
-		// trade blows
-		Engage( f1,f2 );
-		// end of turn maintainence
-		f1.Tick();
-		f2.Tick();
+		std::random_shuffle(team1.begin(), team1.end());
+		std::partition(team1.begin(), team1.end(), isAlive);
+		std::random_shuffle(team2.begin(), team2.end());
+		std::partition(team2.begin(), team2.end(), isAlive);
+
+		for (size_t i = 0; i < team1.size(); i++)
+		{
+			Engage(*team1[i], *team2[i]);
+			std::cout << "--------------------------------" << std::endl;
+		}
+		for (size_t i = 0; i < team1.size(); i++)
+		{
+			team1[i]->Tick();
+			team2[i]->Tick();
+		}
+		std::cout << "================================" << std::endl;
 
 		std::cout << "Press any key to continue...";
-		while( !_kbhit() );
+		while (!_kbhit());
 		_getch();
 		std::cout << std::endl << std::endl;
-	}
 
-	if( f1.IsAlive() )
-	{
-		std::cout << f1.GetName() << " is victorious!";
+		if (!std::any_of(team2.begin(), team2.end(), isAlive))
+		{
+			std::cout << std::endl << "Team 1 is victorious" << std::endl;
+		}
+		else if (!std::any_of(team1.begin(), team1.end(), isAlive))
+		{
+			std::cout << std::endl << "Team 2 is victorious" << std::endl;
+		}
 	}
-	else
+	for (int i = 0; i < team1.size(); i++)
 	{
-		std::cout << f2.GetName() << " is victorious!";
+		delete team1[i];
+		delete team2[i];
 	}
-	while( !_kbhit() );
-	return 0;
+	std::cout << "Press any key to exit";
+	while (!_kbhit());
+	_getch();
+	std::cout << std::endl << std::endl;
 }
